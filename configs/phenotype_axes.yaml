@@ -1,0 +1,48 @@
+# Multi-axis cardiomyocyte maturity scorecard (Layer 0)
+# Represented as distributions, not point estimates.
+# Base ionic model: Kernik et al., J Physiol 2019
+# Electrophysiological axes also informed by CiPAORdv1.0 / CiPA Open Data
+
+axes:
+  contractile_apparatus_organization:
+    description: "Sarcomere organization, myofibril alignment, force-generating capacity"
+    primary_sources:
+      - "Published hiPSC-CM maturation proteomics/RNA-seq studies"
+    status: "to_be_parameterized"
+
+  ventricular_identity:
+    description: "Ventricular vs atrial / nodal transcriptional and electrophysiological identity"
+    primary_sources:
+      - "Kernik et al. 2019"
+      - "CiPA multi-line datasets"
+    status: "to_be_parameterized"
+
+  calcium_handling:
+    description: "Ca2+ transient amplitude, kinetics, SR load, NCX contribution"
+    primary_sources:
+      - "Kernik et al. 2019"
+      - "CiPA Open Data"
+    status: "to_be_parameterized"
+
+  action_potential_morphology_stability:
+    description: "APD, triangulation, rate dependence, beat-to-beat stability"
+    primary_sources:
+      - "Kernik et al. 2019"
+      - "CiPAORdv1.0"
+    status: "to_be_parameterized"
+
+  metabolic_state:
+    description: "Oxidative vs glycolytic preference, mitochondrial maturity"
+    primary_sources:
+      - "Published hiPSC-CM metabolic maturation literature"
+    status: "to_be_parameterized"
+
+  proliferative_residual:
+    description: "Residual proliferative capacity / cell-cycle activity; contamination risk"
+    primary_sources:
+      - "Published hiPSC-CM maturation and purity studies"
+    status: "to_be_parameterized"
+
+notes:
+  - "Every axis must carry provenance (source, species/line, assay) in the versioned parameter table."
+  - "Downstream layers consume distributions so uncertainty is propagated, not collapsed."
