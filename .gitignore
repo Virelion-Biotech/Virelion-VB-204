@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Results & large data (keep structure, ignore content)
+results/**
+!results/.gitkeep
+data/geometries/**/*.msh
+data/geometries/**/*.vtu
+data/geometries/**/*.vtk
+data/geometries/**/*.h5
+*.h5
+*.vtk
+*.vtu
+*.msh
+
+# openCARP / simulation outputs
+*.igb
+*.dat
+*.bin
+*.pts
+*.elem
+*.lon
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets / local
+.env
+*.local.yaml
