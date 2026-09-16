@@ -1,0 +1,60 @@
+# VB-204 candidate graft architectures
+# Source: VB-204 Discovery Dossier + WS-C1 proposal
+# Status: discovery definitions — not manufacturing specifications
+
+architectures:
+  A:
+    name: "Cell suspension"
+    description: "Simplest cell-product concept; scalable delivery logic."
+    strengths:
+      - Simplest product concept
+      - Scalable delivery
+    liabilities:
+      - Poor retention
+      - Heterogeneous spatial distribution
+      - Limited force transmission
+    vb204_position: "Reference comparator"
+
+  B:
+    name: "Matrix-supported microtissue"
+    description: "Improves local organization and potentially retention; intermediate manufacturing complexity."
+    strengths:
+      - Improved local organization
+      - Potentially better retention
+    liabilities:
+      - Material–cell interactions need optimization
+      - Dose definition complexity
+    vb204_position: "High-priority discovery path"
+
+  C:
+    name: "Epicardial engineered heart-muscle patch"
+    description: "Directly addresses structural integration, retention and organized force generation."
+    strengths:
+      - Structural integration
+      - Retention
+      - Organized force generation
+      - Aligned with leading translational programs
+    liabilities:
+      - Surgical delivery
+      - Vascularization & thickness constraints
+      - Immunology and manufacturing complexity
+    vb204_position: "Lead strategic architecture"
+
+  D:
+    name: "Composite mechanically reinforcing graft"
+    description: "Adds passive mechanical support to active remuscularization."
+    strengths:
+      - Passive mechanical support + active remuscularization
+    liabilities:
+      - More complex product
+      - Long-term material fate and regulatory burden
+    vb204_position: "Second-generation option"
+
+# Variables shared across architectures (to be parameterized in Layer 1)
+shared_variables:
+  - thickness
+  - alignment          # isotropic | anisotropic
+  - cell_density
+  - matrix_stiffness
+  - vascular_void_fraction
+  - interface_contact_area
