@@ -1,0 +1,55 @@
+# Layer 2.5 Benchmark Case Registry
+# These five studies are the mandatory validation set.
+# Pipeline may not rank novel architectures until it correctly rank-orders them.
+
+benchmarks:
+  - id: chong_2014
+    citation: "Chong et al., Nature 2014"
+    model: "NHP (macaque)"
+    architecture: "A (cell suspension)"
+    outcome: "Non-fatal ventricular arrhythmias (VT/AIVR) from ectopic-pacemaker point source; quantitative telemetric burden"
+    role: "positive_quantitative"
+    notes: "Electrical mapping confirmed ectopic source"
+
+  - id: liu_2018
+    citation: "Liu et al., Nat Biotechnol 2018"
+    model: "NHP (macaque)"
+    architecture: "A (cell suspension)"
+    outcome: "Graft-associated ventricular arrhythmias from ectopic-pacemaker point source, localized by mapping"
+    role: "positive_mapping"
+    notes: "Strong conduction-mapping benchmark"
+
+  - id: shiba_2016
+    citation: "Shiba et al., Nature 2016"
+    model: "NHP (cynomolgus)"
+    architecture: "A (allogeneic iPSC-CM suspension)"
+    outcome: "Transient but statistically significant increase in VT incidence vs vehicle"
+    role: "positive_moderate"
+    notes: "Allogeneic setting"
+
+  - id: romagnuolo_2019
+    citation: "Romagnuolo et al., Stem Cell Reports 2019"
+    model: "Porcine"
+    architecture: "A (hESC-CM suspension)"
+    outcome: "Ventricular tachyarrhythmias induced post-graft"
+    role: "positive_host_matched"
+    notes: "Primary host-species match (porcine)"
+
+  - id: jebran_2025
+    citation: "Jebran et al., Nature 2025"
+    model: "NHP (rhesus) + first-in-human"
+    architecture: "C (epicardial EHM patch)"
+    outcome: "No arrhythmia or tumour formation observed; functional remuscularization confirmed in humans"
+    role: "negative_architecture_matched"
+    notes: "Most valuable single entry — same architecture as VB-204 lead candidate"
+
+independent_mechanism_check:
+  - id: gibbs_2023
+    citation: "Gibbs, Marchianò, Zhang, Yang, Murry & Boyle, J Physiol 2023"
+    role: "Independent computational reproduction of engraftment-arrhythmia mechanism (cases 1–2)"
+    notes: "Second check that Layer 2 reproduces correct mechanism, not just incidence"
+
+gate_rule: >
+  The pipeline is not used to rank novel VB-204 architectures until it correctly
+  rank-orders all five benchmark cases by relative arrhythmic risk — including
+  placing the Jebran et al. case below the four cell-suspension cases.
