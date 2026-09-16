@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vb204"
+version = "0.1.0-dev"
+description = "VB-204 Computational Graft Integration & Risk Engine (discovery-stage)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+  { name = "Virelion Biotech" }
+]
+dependencies = [
+  "numpy",
+  "scipy",
+  "pandas",
+  "pyyaml",
+  "h5py",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
