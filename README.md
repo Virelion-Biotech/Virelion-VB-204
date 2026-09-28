@@ -2,7 +2,7 @@
 
 **VB-204 — Computational Graft Integration & Risk Engine**
 
-VB-204 is a discovery-stage program for an engineered, stem-cell-derived cardiomyocyte graft intended to restore lost myocardial mass. This repository implements the fully computational discovery workstream (WS-C1) that ranks candidate graft architectures by predicted arrhythmogenic risk and mechanical contribution **before any wet-lab tissue is fabricated**.
+VB-204 is a discovery-stage program for an engineered, stem-cell-derived cardiomyocyte graft intended to restore lost myocardial mass. This repository specifies the planned fully computational discovery workstream (WS-C1) for ranking candidate graft architectures by predicted arrhythmogenic risk and mechanical contribution **before any wet-lab tissue is fabricated**.
 
 The work uses only public data, published large-animal/NHP graft studies, and open-source cardiac modeling software. No cells, grafts, animals, or wet-lab reagents are required to execute the pipeline described here.
 
@@ -24,6 +24,10 @@ The result is architecture down-selection that is evidence-based rather than ass
 - Go/no-go thresholds derived by structured expert elicitation and anchored to real experimental outcomes
 - A minimal, targeted set of first wet-lab experiments that would most reduce residual uncertainty
 - Fully open, reproducible simulation code and a complete parameter-provenance record
+
+## Current implementation status
+
+This is a research scaffold, not an executable graft-ranking engine. The current Python package contains a version stub; the phenotype library, geometry generator, electromechanical solver integration, benchmark gate, and ranking workflow described below are not implemented here. The architecture and benchmark configuration files do not constitute completed simulations or validation results. No architecture ranking should be inferred from this repository's current contents.
 
 ## Computational pipeline (Layers 0–4 + gate)
 
