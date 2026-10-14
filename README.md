@@ -9,6 +9,21 @@ The work uses only public data, published large-animal/NHP graft studies, and op
 > **Primary scientific question**  
 > Which combination of (1) cardiomyocyte phenotype maturity axes, (2) tissue architecture, and (3) interface properties yields the lowest predicted arrhythmogenic risk while maximizing predicted mechanical contribution and electrical synchrony?
 
+
+<!-- VALIDATION_PRODUCT_STATUS:BEGIN -->
+## Validation and product completion status
+
+**Reviewed 2026-10-14; implementation base `634233d549ab`.** **Status: Research scaffold; executable graft-ranking engine absent.** This is an evidence-backed scope assessment, not a percentage-complete estimate or a declaration that the product is finished.
+
+| Area | Current evidence / remaining gate |
+|---|---|
+| Software / operational checks | Repository implementation/planning evidence only; no fresh runtime qualification was performed in this documentation audit. |
+| Scientific or domain evidence | The current implementation is a version stub plus planned architecture/configurations. The phenotype library, geometry generator, solver integration, benchmark gate and ranking workflow are not implemented results. |
+| Remaining for the declared product scope | Implement each declared layer with reproducible inputs and contracts; reproduce independent numerical and published-outcome benchmarks before design ranking; quantify uncertainty/domain transfer; establish independent empirical integration/risk evidence and program-appropriate experimental milestones. |
+
+Evidence and limits: [repository report](README.md). The [organization status index](https://github.com/Virelion-Biotech/Virelion-HeartTwin/blob/main/docs/STACK_VALIDATION_STATUS.md) separates software, numerical, data-readiness and empirical qualification. Code/schema execution or a completed download is not a substitute for endpoint-specific validation.
+<!-- VALIDATION_PRODUCT_STATUS:END -->
+
 ## Why this step exists
 
 VB-204’s discovery roadmap includes an Integration risk model and an electrophysiology characterization workstream. Both currently rest on literature-derived qualitative judgments. This repository converts that qualitative risk register into quantitative, testable predictions, validates those predictions against real published outcomes, and hands off a minimal set of targeted first wet-lab experiments.
