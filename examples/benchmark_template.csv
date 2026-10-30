@@ -1,6 +1,6 @@
-study,architecture,observed_risk,source,unit,notes
-Chong et al. 2014,A,,,,
-Liu et al. 2018,A,,,,
-Shiba et al. 2016,A,,,,
-Romagnuolo et al. 2019,A,,,,
-Jebran et al. 2025,C,,,,
+study,architecture,observed_class,predicted_risk,source,observed_endpoint,notes
+Chong et al. 2014,A,high,,,NHP ventricular arrhythmia burden with mapping,
+Liu et al. 2018,A,high,,,NHP graft-associated ventricular arrhythmias with mapping,
+Shiba et al. 2016,A,moderate,,,VT incidence relative to vehicle controls,
+Romagnuolo et al. 2019,A,high,,,Post-graft ventricular tachyarrhythmias in porcine host,
+Jebran et al. 2025,C,low,,,Epicardial EHM patch; study-specific outcome extraction required,

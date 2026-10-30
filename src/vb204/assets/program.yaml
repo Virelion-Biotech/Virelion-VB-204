@@ -1,0 +1,184 @@
+program:
+  id: VB-204
+  title: Computational Graft Integration and Risk Engine
+  stage: discovery
+  evidence_status: literature-derived and proposed
+  program_start_date: "2026-10-01"
+  scope_boundary: >
+    Computational discovery and prioritization only. Outputs are not clinical
+    predictions, efficacy claims, safety claims, release criteria, or instructions
+    for cell manufacture or implantation.
+  lead_architecture: C
+  backup_architecture: B
+  default_cell_strategy: allogeneic_hypoimmune_engineered
+  fallback_cell_strategy: autologous_or_hla_matched_comparator
+
+architecture_weights:
+  retention: 0.25
+  vascularization: 0.20
+  electrical_integration: 0.20
+  manufacturability: 0.15
+  regulatory_complexity: 0.10
+  mechanical_support: 0.10
+
+architectures:
+  - id: A
+    name: Cell suspension
+    program_position: Reference comparator
+    rationale: Simplest delivery concept; low retention and force transmission are concerns.
+    illustrative_scores: {retention: 1, vascularization: 2, electrical_integration: 1, manufacturability: 5, regulatory_complexity: 4, mechanical_support: 1}
+  - id: B
+    name: Matrix-supported microtissue
+    program_position: High-priority discovery path
+    rationale: Potentially improves organization and retention; interface and material behavior need evidence.
+    illustrative_scores: {retention: 3, vascularization: 3, electrical_integration: 3, manufacturability: 3, regulatory_complexity: 3, mechanical_support: 3}
+  - id: C
+    name: Epicardial engineered heart-muscle patch
+    program_position: Lead strategic architecture
+    rationale: Organized force generation and retention; thickness, perfusion, interface, and manufacturing remain risks.
+    illustrative_scores: {retention: 5, vascularization: 2, electrical_integration: 4, manufacturability: 2, regulatory_complexity: 2, mechanical_support: 4}
+  - id: D
+    name: Composite mechanically reinforcing graft
+    program_position: Second-generation option
+    rationale: Active remuscularization plus passive support; increased material and regulatory complexity.
+    illustrative_scores: {retention: 4, vascularization: 2, electrical_integration: 3, manufacturability: 1, regulatory_complexity: 1, mechanical_support: 5}
+
+risk_register:
+  scale: {low: 1, low_moderate: 1.5, moderate: 2, high: 3, very_high: 4, unknown: 2}
+  items:
+    - id: graft_arrhythmia
+      name: Graft-driven ventricular arrhythmia
+      severity: very_high
+      likelihood: high
+      hard_gate: true
+      gate: Must pass a predefined, independently reviewed benchmark and validation protocol.
+      mitigation: Quantify heterogeneity, interface conduction, ectopic activity, re-entry and uncertainty.
+    - id: poor_retention
+      name: Poor graft retention or survival
+      severity: high
+      likelihood: high
+      hard_gate: false
+      gate: Durable retention evidence and validated mechanical proxies are required.
+      mitigation: Compare tissue architecture, interface, vascular access and thickness.
+    - id: immature_phenotype
+      name: Immature cardiomyocyte phenotype
+      severity: high
+      likelihood: high
+      hard_gate: false
+      gate: Multi-axis cell-state characterization and independent scorecard validation.
+      mitigation: Keep phenotype measures as distributions with source provenance.
+    - id: residual_pluripotent_cells
+      name: Residual pluripotent or undesired cells
+      severity: very_high
+      likelihood: moderate
+      hard_gate: true
+      gate: Must be evaluated by an independently reviewed product-specific safety program.
+      mitigation: Treat transcriptomic flags as signals to investigate, not a release decision.
+    - id: immune_rejection
+      name: Immune rejection
+      severity: high
+      likelihood: high
+      hard_gate: false
+      gate: Immunology workstream must evaluate the intended allogeneic strategy.
+      mitigation: Track species, cell source and strategy assumptions explicitly.
+    - id: poor_vascularization
+      name: Poor vascularization or ischemic core
+      severity: high
+      likelihood: high
+      hard_gate: false
+      gate: Thickness and perfusion assumptions need evidence.
+      mitigation: Parameterize thickness and vascular void fraction only with sourced values.
+    - id: mechanical_mismatch
+      name: Mechanical mismatch and stress concentration
+      severity: high
+      likelihood: moderate
+      hard_gate: false
+      gate: Mechanics metrics need mesh convergence and model validation.
+      mitigation: Track stress, strain transfer and force-generation evidence.
+    - id: solver_nonconvergence
+      name: Numerical nonconvergence or solver-domain mismatch
+      severity: high
+      likelihood: moderate
+      hard_gate: true
+      gate: Mesh/time-step convergence and mono-/bidomain comparison required before design ranking.
+      mitigation: Archive convergence report, solver version, inputs and run hashes.
+
+hypotheses:
+  - id: H1
+    name: Phenotype maturity
+    prediction: A multi-axis maturity profile reduces avoidable uncertainty compared with a single maturity marker.
+    evidence_status: framework_only
+    refs: [14, 15]
+  - id: H2
+    name: Tissue organization
+    prediction: Organized 3D tissue can improve retention and force transfer relative to dispersed cells.
+    evidence_status: literature_supported_not_vb204_validated
+    refs: [3, 9]
+  - id: H3
+    name: Interface properties
+    prediction: Host-graft interface and tissue conductivity affect activation delay and arrhythmia mechanisms.
+    evidence_status: literature_supported_not_vb204_validated
+    refs: [6, 13]
+  - id: H4
+    name: Cross-species transfer
+    prediction: Porcine and human substrate rankings may differ and must be compared explicitly.
+    evidence_status: untested_in_vb204
+    refs: [7, 10]
+
+workstreams:
+  - {id: WS1, name: Product definition, code_support: full, dependency: Program governance}
+  - {id: WS2, name: Cell-state benchmarking, code_support: partial, dependency: Public expression data and expert review}
+  - {id: WS3, name: Tissue engineering and architecture, code_support: partial, dependency: Comparative tissue-engineering evidence}
+  - {id: WS4, name: Electrophysiology and arrhythmia, code_support: partial, dependency: Validated solver setup and EP expertise}
+  - {id: WS5, name: Vascular integration, code_support: partial, dependency: Geometry/perfusion evidence and specialist input}
+  - {id: WS6, name: Immunology, code_support: decision_record_only, dependency: Immunology/translational expertise}
+  - {id: WS7, name: Translational package, code_support: full_for_decision_tracking, dependency: Results and expert review}
+
+roadmap_12_months:
+  - {id: M0, start_month: 0, end_month: 2, title: TPP freeze and literature landscape, deliverable: Versioned scope and evidence matrix, status: not_started}
+  - {id: M1, start_month: 2, end_month: 4, title: Cell-state scorecard, deliverable: Marker panel benchmarked on real public data, status: not_started}
+  - {id: M2, start_month: 3, end_month: 6, title: Architecture down-selection, deliverable: Evidence-backed architecture comparison, status: not_started}
+  - {id: M3, start_month: 5, end_month: 8, title: Integration risk model, deliverable: Validated electrophysiology and mechanical model, status: not_started}
+  - {id: M4, start_month: 7, end_month: 10, title: Preclinical study blueprint, deliverable: Reviewed stage-gate and endpoint plan, status: not_started}
+  - {id: M5, start_month: 9, end_month: 12, title: Translation package, deliverable: Reproducible report and targeted follow-up questions, status: not_started}
+
+computational_workstream_18_weeks:
+  - {weeks: "1-2", layer: "0-1", activity: Acquire named models and host assets; extract five study benchmark endpoints; complete parameter provenance, deliverable: Parameter library and benchmark dossier}
+  - {weeks: "3-6", layer: "2", activity: Adapt models and implement runs; check >=3 spatial resolutions and >=2 time steps; compare monodomain with bidomain, deliverable: Convergence-characterized simulation workflow}
+  - {weeks: "7-9", layer: "2.5", activity: Benchmark the five cases; document failure diagnosis; decide whether to proceed, deliverable: Benchmark validation report and gate decision}
+  - {weeks: "10-13", layer: "1-3", activity: Sweep architecture, phenotype and porcine host combinations, deliverable: Ranked matrix and risk maps only if prior gates pass}
+  - {weeks: "14-15", layer: "3", activity: Run human-substrate translational checks and log ranking changes, deliverable: Cross-species sensitivity report}
+  - {weeks: "16-17", layer: "3-4", activity: Uncertainty and robustness analysis; structured expert thresholds, deliverable: Reviewed risk model and threshold provenance}
+  - {weeks: "18", layer: "4", activity: Package evidence and identify information gaps, deliverable: Reproducible hand-off report and minimal measurement priorities}
+
+go_no_go:
+  criteria:
+    - {id: go_1_reproducible_phenotype, type: GO, status: unmet, depends_on: [WS2], text: Reproducible target cardiomyocyte phenotype is defined with evidence.}
+    - {id: go_2_architecture_path, type: GO, status: unmet, depends_on: [WS3, WS4, WS5], text: An architecture has a credible path to retention, vascular access and coordinated electromechanical function.}
+    - {id: go_3_arrhythmia_measurable, type: GO, status: unmet, depends_on: [WS4], text: Arrhythmia mechanism is measurable and modeled against benchmarks.}
+    - {id: nogo_1_electrical_instability, type: NO-GO, status: not_triggered, depends_on: [WS3, WS4], text: Persistent electrical instability, uncontrolled growth risk or poor long-term retention is demonstrated.}
+    - {id: nogo_2_manufacturing_infeasible, type: NO-GO, status: not_triggered, depends_on: [WS3, WS6], text: Product complexity cannot be reasonably manufactured, characterized or quality-controlled.}
+
+benchmark_cases:
+  - {study: "Chong et al. 2014", architecture: A, observed_class: high, endpoint: "NHP ventricular arrhythmia burden with mapping", url: "https://doi.org/10.1038/nature13235"}
+  - {study: "Liu et al. 2018", architecture: A, observed_class: high, endpoint: "NHP graft-associated ventricular arrhythmias with mapping", url: "https://doi.org/10.1038/nbt.4162"}
+  - {study: "Shiba et al. 2016", architecture: A, observed_class: moderate, endpoint: "VT incidence relative to vehicle controls", url: "https://doi.org/10.1038/nature19815"}
+  - {study: "Romagnuolo et al. 2019", architecture: A, observed_class: high, endpoint: "Post-graft ventricular tachyarrhythmias in porcine host", url: "https://doi.org/10.1016/j.stemcr.2019.04.012"}
+  - {study: "Jebran et al. 2025", architecture: C, observed_class: low, endpoint: "Epicardial EHM patch; no arrhythmia reported in the described cases", url: "https://doi.org/10.1038/s41586-024-08463-0"}
+
+references:
+  - {key: 1, citation: "HEAL-CHF investigators, Nature Medicine (2026)", url: "https://www.nature.com/articles/s41591-026-04605-1"}
+  - {key: 2, citation: "Oberhofer et al., NEJM (2026)", url: "https://doi.org/10.1056/NEJMoa2513525"}
+  - {key: 3, citation: "Jebran et al., Engineered heart muscle allografts for heart repair in primates and humans, Nature (2025)", url: "https://doi.org/10.1038/s41586-024-08463-0"}
+  - {key: 4, citation: "Schwaerzer, Nat Cardiovasc Res (2026)", url: "https://www.nature.com/articles/s44161-025-00770-7"}
+  - {key: 5, citation: "Selvakumar et al., Nat Cardiovasc Res (2024)", url: "https://doi.org/10.1038/s44161-023-00419-3"}
+  - {key: 6, citation: "Fassina et al., Modelling the interaction between stem cell-derived cardiomyocyte patches and host myocardium, PLoS Comput Biol (2022)", url: "https://doi.org/10.1371/journal.pcbi.1010030"}
+  - {key: 7, citation: "Gaur et al., Porcine ventricular cardiomyocyte electrophysiology model and pig-to-human translation, PLoS Comput Biol (2021)", url: "https://doi.org/10.1371/journal.pcbi.1009137"}
+  - {key: 8, citation: "Mendonca Costa et al., Anatomical and electrophysiological detail requirements for porcine ventricular models, Comput Biol Med (2022)", url: "https://doi.org/10.1016/j.compbiomed.2021.105061"}
+  - {key: 9, citation: "Romagnuolo et al., hESC-CM grafts in infarcted pig hearts and ventricular tachyarrhythmias, Stem Cell Reports (2019)", url: "https://doi.org/10.1016/j.stemcr.2019.04.012"}
+  - {key: 10, citation: "Ten Tusscher and Panfilov, Alternans and spiral breakup in a human ventricular tissue model, AJP Heart (2006)", url: "https://doi.org/10.1152/ajpheart.00009.2006"}
+  - {key: 11, citation: "Plank et al., The openCARP simulation environment, Comput Methods Programs Biomed (2021)", url: "https://doi.org/10.1016/j.cmpb.2021.106223"}
+  - {key: 12, citation: "FDA, Cellular Therapy for Cardiac Disease: Guidance for Industry (2010)", url: "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cellular-therapy-cardiac-disease"}
+  - {key: 13, citation: "Fassina et al., Arrhythmogenic risk of engineered heart muscle patches, Comput Biol Med (2023)", url: "https://doi.org/10.1016/j.compbiomed.2023.106550"}
+  - {key: 14, citation: "Kernik et al., hiPSC-CM computational model incorporating experimental variability, J Physiol (2019)", url: "https://doi.org/10.1113/JP277534"}
+  - {key: 15, citation: "FDA/HESI CiPA initiative, CiPAORdv1.0 and CiPA Open Data", url: "https://cipaproject.org/"}

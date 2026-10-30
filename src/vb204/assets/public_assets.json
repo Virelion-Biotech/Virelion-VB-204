@@ -1,0 +1,22 @@
+{
+  "source_note": "Asset links are taken from the 2026 Rosales et al. PLOS Computational Biology data-availability statement. Downloading is explicit; model files may be large and must be reviewed for compatibility before use.",
+  "article": {
+    "citation": "Rosales et al. In silico assessment of arrhythmic risk following implantation of engineered heart tissues in porcine hearts with varying infarct locations. PLOS Computational Biology (2026).",
+    "doi": "10.1371/journal.pcbi.1013740",
+    "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1013740",
+    "article_license": "CC BY 4.0"
+  },
+  "software": [
+    {"name":"HeartModelling","url":"https://github.com/lino202/HeartModelling","role":"modeling and postprocessing software"},
+    {"name":"simOmPP","url":"https://github.com/lino202/simOmPP","role":"modeling and postprocessing software"},
+    {"name":"ELECTRA","url":"https://github.com/lino202/ELECTRA","role":"solver named in the article data-availability statement; do not assume native openCARP input compatibility"}
+  ],
+  "zenodo_records": [
+    {"record":"17415592","doi":"10.5281/zenodo.17415592","role":"pre-remuscularization model and configuration files","url":"https://zenodo.org/records/17415592"},
+    {"record":"17435811","doi":"10.5281/zenodo.17435811","role":"post-remuscularization cases and optical-mapping data obtained during VT","url":"https://zenodo.org/records/17435811"}
+  ],
+  "additional_models": [
+    {"name":"openCARP","url":"https://opencarp.org/","role":"cardiac electrophysiology solver; parameter syntax and mesh compatibility must be verified"},
+    {"name":"CiPA Open Data","url":"https://cipaproject.org/","role":"electrophysiological data; source-specific schema and license checks required"}
+  ]
+}

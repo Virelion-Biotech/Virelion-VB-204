@@ -17,6 +17,10 @@ def test_score_deterministic_and_gate_blocks_decisions():
     assert set(a.decision_status) == {"EXPLORATORY_GATE_BLOCKED"}
     assert a.iloc[0].architecture == "C"
 
+def test_decision_grade_requires_explicit_signoff():
+    result = score_architectures(candidates(), settings=settings(), decision_grade_eligible=True)
+    assert set(result.decision_status) == {"ELIGIBLE_FOR_INDEPENDENT_REVIEW"}
+
 def test_invalid_scale_rejected():
     frame=candidates(); frame.loc[0,"arrhythmia_risk_mean"]=1.1
     with pytest.raises(ValueError,match=r"\[0, 1\]"): validate_candidates(frame)
