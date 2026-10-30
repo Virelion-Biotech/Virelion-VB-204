@@ -1,6 +1,3 @@
-"""VB-204 Computational Graft Integration & Risk Engine.
+"""VB-204 computational graft integration and exploratory risk engine."""
 
-Discovery-stage pipeline only. See docs/boundaries.md.
-"""
-
-__version__ = "0.1.0-dev"
+__version__ = "0.2.0"
