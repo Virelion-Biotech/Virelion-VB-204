@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from vb204.convergence import evaluate_convergence
-from vb204.gates import REQUIRED_GATES, evaluate_gates
+from vb204.gates import REQUIRED_GATES, evaluate_gates, validate_gate_report
 from vb204.geometry import validate_geometry_spec
 from vb204.phenotype import score_maturity
 from vb204.plan import architecture_scores, evaluate_go_no_go, report_data
@@ -70,15 +70,25 @@ def test_convergence_fails_on_incomplete_grid():
 
 def test_validation_gates_default_pending():
     result = evaluate_gates({"gates": {}})
-    assert not result["decision_grade_eligible"]
+    assert not result["all_signoff_gates_recorded"]
+    assert result["decision_grade_eligible"] is False
     assert len(result["pending_gates"]) == len(REQUIRED_GATES)
 
 
 def test_validation_gate_requires_evidence_uri_and_reviewer():
-    payload = {"gates": {key: {"status":"passed","evidence_uri":"https://example.org/report","reviewer":"Independent reviewer"} for key in REQUIRED_GATES}}
-    assert evaluate_gates(payload)["decision_grade_eligible"]
-    payload["gates"]["five_case_benchmark"]["evidence_uri"] = ""
-    assert not evaluate_gates(payload)["decision_grade_eligible"]
+    payload={"gates": {key: {"status":"passed","evidence_uri":"https://example.org/report","reviewer":"Independent reviewer"} for key in REQUIRED_GATES}}
+    report = evaluate_gates(payload)
+    assert report["all_signoff_gates_recorded"]
+    assert not report["decision_grade_eligible"]
+    assert validate_gate_report(report)
+    payload["gates"]["five_case_benchmark"]["evidence_uri"]=""
+    incomplete = evaluate_gates(payload)
+    assert not incomplete["all_signoff_gates_recorded"]
+    assert not validate_gate_report(incomplete)
+
+
+def test_fabricated_boolean_cannot_unlock_scoring():
+    assert not validate_gate_report({"decision_grade_eligible": True, "gates": []})
 
 
 def test_maturity_scorecard_relative_not_absolute():
