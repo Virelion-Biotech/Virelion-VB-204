@@ -7,15 +7,18 @@ from vb204.geometry import validate_geometry_spec
 from vb204.phenotype import score_maturity
 from vb204.plan import architecture_scores, evaluate_go_no_go, report_data
 
+
 def test_plan_renders_all_architectures_and_fails_closed():
     assert len(architecture_scores()) == 4
     assert evaluate_go_no_go()["overall"].startswith("HOLD")
     data = report_data()
     assert data["scientific_status"]["decision_grade_rankings_allowed"] is False
 
+
 def test_geometry_requires_actual_sourced_parameters():
     with pytest.raises(ValueError, match="incomplete"):
         validate_geometry_spec("C", {"thickness_mm": 1.0})
+
 
 def test_geometry_requires_provenance_for_every_numeric_parameter():
     params = {
@@ -24,6 +27,15 @@ def test_geometry_requires_provenance_for_every_numeric_parameter():
     }
     with pytest.raises(ValueError, match="provenance"):
         validate_geometry_spec("C", params, {})
+
+
+def _convergence_frame(values):
+    rows = []
+    for (level, dt), value in values.items():
+        rows.append({"case_id": "synthetic-test", "spatial_level": level, "dt_ms": dt,
+                     "metric": "activation_ms", "value": value, "unit": "ms"})
+    return pd.DataFrame(rows)
+
 
 def test_convergence_requires_multiple_resolutions_and_steps():
     frame = pd.DataFrame([
@@ -34,25 +46,40 @@ def test_convergence_requires_multiple_resolutions_and_steps():
     assert not result["passed"]
     assert not result["cases"][0]["passed"]
 
+
 def test_convergence_passes_synthetic_numerical_fixture_only():
-    rows=[]
-    vals={(1,1.0):10.2,(1,.5):10.1,(2,1.0):10.1,(2,.5):10.02,(3,1.0):10.03,(3,.5):10.0}
-    for (level,dt),value in vals.items():
-        rows.append({"case_id":"synthetic-test","spatial_level":level,"dt_ms":dt,"metric":"activation_ms","value":value,"unit":"ms"})
-    result=evaluate_convergence(pd.DataFrame(rows))
+    vals = {(1,1.0):10.2,(1,.5):10.1,(2,1.0):10.1,(2,.5):10.02,(3,1.0):10.03,(3,.5):10.0}
+    result = evaluate_convergence(_convergence_frame(vals))
     assert result["passed"]
     assert result["decision_grade_eligible"] is False
 
+
+def test_convergence_can_select_middle_level_when_coarsest_fails():
+    vals = {(1,1.0):12.0,(1,.5):11.8,(2,1.0):10.2,(2,.5):10.1,(3,1.0):10.03,(3,.5):10.0}
+    result = evaluate_convergence(_convergence_frame(vals))
+    assert result["passed"]
+    assert result["cases"][0]["selected_coarsest_level"] == 2.0
+
+
+def test_convergence_fails_on_incomplete_grid():
+    vals = {(1,1.0):10.2,(1,.5):10.1,(2,1.0):10.1,(2,.5):10.02,(3,.5):10.0}
+    result = evaluate_convergence(_convergence_frame(vals))
+    assert not result["passed"]
+    assert any("found 0" in error for error in result["cases"][0]["errors"])
+
+
 def test_validation_gates_default_pending():
-    result=evaluate_gates({"gates": {}})
+    result = evaluate_gates({"gates": {}})
     assert not result["decision_grade_eligible"]
     assert len(result["pending_gates"]) == len(REQUIRED_GATES)
 
+
 def test_validation_gate_requires_evidence_uri_and_reviewer():
-    payload={"gates": {key: {"status":"passed","evidence_uri":"https://example.org/report","reviewer":"Independent reviewer"} for key in REQUIRED_GATES}}
+    payload = {"gates": {key: {"status":"passed","evidence_uri":"https://example.org/report","reviewer":"Independent reviewer"} for key in REQUIRED_GATES}}
     assert evaluate_gates(payload)["decision_grade_eligible"]
-    payload["gates"]["five_case_benchmark"]["evidence_uri"]=""
+    payload["gates"]["five_case_benchmark"]["evidence_uri"] = ""
     assert not evaluate_gates(payload)["decision_grade_eligible"]
+
 
 def test_maturity_scorecard_relative_not_absolute():
     genes = ["TNNI3","MYH7","TNNI1","MYH6","SCN5A","POU5F1"]
