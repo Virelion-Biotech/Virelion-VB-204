@@ -1,155 +1,45 @@
-# Virelion-VB-204
+# VB-204 — Computational Graft Integration & Risk Engine
 
-**VB-204 — Computational Graft Integration & Risk Engine**
+VB-204 is a discovery-stage computational program for comparing engineered cardiomyocyte-graft architectures before any wet-lab tissue is fabricated. This repository now combines the supplied VB-204 Discovery Toolkit decision logic with executable analysis utilities and a fail-closed orchestration layer aligned to the uploaded 18-week computational proposal.
 
-VB-204 is a discovery-stage program for an engineered, stem-cell-derived cardiomyocyte graft intended to restore lost myocardial mass. This repository specifies the planned fully computational discovery workstream (WS-C1) for ranking candidate graft architectures by predicted arrhythmogenic risk and mechanical contribution **before any wet-lab tissue is fabricated**.
+## Run it
 
-The work uses only public data, published large-animal/NHP graft studies, and open-source cardiac modeling software. No cells, grafts, animals, or wet-lab reagents are required to execute the pipeline described here.
+    python -m pip install -e ".[dev]"
+    pytest -q
+    python -m vb204 plan
+    python -m vb204 plan --json --out outputs/vb204-plan.json
+    python -m vb204 risks --out outputs/risks.json
+    python -m vb204 architectures
+    python -m vb204 gonogo
+    python -m vb204 maturity expression_matrix.csv
+    python -m vb204 assets --record all
+    python -m vb204 convergence convergence_metrics.csv
+    python -m vb204 benchmark benchmark_filled.csv
+    python -m vb204 gates examples/validation_gates_template.json
 
-> **Primary scientific question**  
-> Which combination of (1) cardiomyocyte phenotype maturity axes, (2) tissue architecture, and (3) interface properties yields the lowest predicted arrhythmogenic risk while maximizing predicted mechanical contribution and electrical synchrony?
+The CLI also supports candidate scoring, sweep-manifest preparation, parametric geometry-spec validation and explicit solver execution. See docs/EXECUTION.md for the full workflow and file contracts.
 
+## Included executable layers
 
-<!-- VALIDATION_PRODUCT_STATUS:BEGIN -->
-## Validation and product completion status
+- **Layer 0:** literature-derived maturity axes and a relative expression-scorecard framework.
+- **Layer 1:** A–D parametric geometry specification validation, host-case manifest preparation, source/license/hash tracking, and explicitly selected public asset retrieval.
+- **Layer 2:** solver execution wrapper for real case manifests; convergence analysis requires real postprocessed numerical outputs.
+- **Layer 2.5:** five-case benchmark ordinal gate, designed not to compare unlike published endpoint units as if they were identical.
+- **Layer 3:** uncertainty-aware relative scoring, risk register, GO/NO-GO tracking, and mandatory validation-gate checklist.
+- **Layer 4:** roadmap/report scaffolding and explicit residual evidence gaps for measurement prioritization.
 
-**Reviewed 2026-10-14; implementation base `634233d549ab`.** **Status: Research scaffold; executable graft-ranking engine absent.** This is an evidence-backed scope assessment, not a percentage-complete estimate or a declaration that the product is finished.
+## Scientific status
 
-| Area | Current evidence / remaining gate |
-|---|---|
-| Software / operational checks | Repository implementation/planning evidence only; no fresh runtime qualification was performed in this documentation audit. |
-| Scientific or domain evidence | The current implementation is a version stub plus planned architecture/configurations. The phenotype library, geometry generator, solver integration, benchmark gate and ranking workflow are not implemented results. |
-| Remaining for the declared product scope | Implement each declared layer with reproducible inputs and contracts; reproduce independent numerical and published-outcome benchmarks before design ranking; quantify uncertainty/domain transfer; establish independent empirical integration/risk evidence and program-appropriate experimental milestones. |
+The tests check software behavior, not the truth of the biological assumptions. Architecture scores and RPNs are planning judgments. The expression scorecard is relative and not validated for release. A passing ordinal benchmark check is not quantitative reproduction. The solver wrapper can invoke a configured binary but does not create a valid ventricular mesh, validate constitutive models, or prove solver correctness.
 
-Evidence and limits: [repository report](README.md). The [organization status index](https://github.com/Virelion-Biotech/Virelion-HeartTwin/blob/main/docs/STACK_VALIDATION_STATUS.md) separates software, numerical, data-readiness and empirical qualification. Code/schema execution or a completed download is not a substitute for endpoint-specific validation.
-<!-- VALIDATION_PRODUCT_STATUS:END -->
+No novel architecture ranking is decision-grade until provenance, mesh/anatomy validation, convergence, mono-/bidomain comparison, all five benchmark reproductions, mechanics validation, cross-species transfer, uncertainty/OOD and independent expert-review gates are documented as passed. See docs/IMPLEMENTATION_PLAN.md and docs/EXECUTION.md.
 
-## Why this step exists
+## Solver/data compatibility note
 
-VB-204’s discovery roadmap includes an Integration risk model and an electrophysiology characterization workstream. Both currently rest on literature-derived qualitative judgments. This repository converts that qualitative risk register into quantitative, testable predictions, validates those predictions against real published outcomes, and hands off a minimal set of targeted first wet-lab experiments.
+The 2026 Rosales et al. article's data-availability statement names HeartModelling, simOmPP and ELECTRA and provides Zenodo data records 17415592 and 17435811. Those model files must not be assumed compatible with openCARP without a verified adapter. Links and provenance hooks live in src/vb204/assets/public_assets.json.
 
-The result is architecture down-selection that is evidence-based rather than assumption-based, at zero animal cost.
+## Boundaries
 
-## What this repository delivers
+This repository supports research planning and computational prioritization only. It does not contain gene-editing sequences, culture recipes, release thresholds, cell doses, surgical/implantation instructions or clinical recommendations.
 
-- A ranked architecture × phenotype matrix with quantitative, uncertainty-bounded risk scores
-- Virtual arrhythmia risk maps (re-entry propensity, conduction delay, ectopic automaticity)
-- A simulation pipeline that is **required to reproduce known outcomes** from five independent published large-animal/NHP graft studies before any novel ranking is treated as decision-grade
-- Sensitivity and uncertainty analysis identifying the highest-leverage design parameters
-- Go/no-go thresholds derived by structured expert elicitation and anchored to real experimental outcomes
-- A minimal, targeted set of first wet-lab experiments that would most reduce residual uncertainty
-- Fully open, reproducible simulation code and a complete parameter-provenance record
-
-## Current implementation status
-
-This is a research scaffold, not an executable graft-ranking engine. The current Python package contains a version stub; the phenotype library, geometry generator, electromechanical solver integration, benchmark gate, and ranking workflow described below are not implemented here. The architecture and benchmark configuration files do not constitute completed simulations or validation results. No architecture ranking should be inferred from this repository's current contents.
-
-## Computational pipeline (Layers 0–4 + gate)
-
-```text
-Layer 0   Phenotype library (distributions, not point estimates)
-                ↓
-Layer 1   Tissue / graft geometry generator (Architectures A–D)
-                ↓
-Layer 2   Multiphysics electromechanical simulation (openCARP)
-                ↓
-Layer 2.5 Benchmark validation gate  ←  mandatory before design ranking
-                ↓
-Layer 3   Risk aggregation & decision layer (HeartTwin-compatible)
-                ↓
-Layer 4   Experimental prioritization (minimal wet-lab package)
-```
-
-**Layer 2.5 is a hard gate.** The pipeline is not used to rank novel VB-204 architectures until it correctly rank-orders the five named benchmark cases by relative arrhythmic risk (including placing the low-risk epicardial-patch case below the four high-risk cell-suspension cases).
-
-### Benchmark case set (already identified)
-
-| Study | Architecture | Role |
-|-------|--------------|------|
-| Chong et al., *Nature* 2014 | Cell suspension (A) | Positive / quantitative |
-| Liu et al., *Nat Biotechnol* 2018 | Cell suspension (A) | Positive / mapping |
-| Shiba et al., *Nature* 2016 | Cell suspension (A) | Positive / moderate |
-| Romagnuolo et al., *Stem Cell Reports* 2019 | Cell suspension (A), porcine | Positive / host-matched |
-| Jebran et al., *Nature* 2025 | Epicardial EHM patch (C) | Negative / architecture-matched |
-
-### Candidate architectures
-
-- **A** — Cell suspension  
-- **B** — Matrix-supported microtissue  
-- **C** — Epicardial engineered heart-muscle patch *(current lead strategic architecture)*  
-- **D** — Composite mechanically reinforcing graft  
-
-## Key technical foundations (public & citable)
-
-| Component | Source |
-|-----------|--------|
-| hiPSC-CM ionic model | Kernik et al., *J Physiol* 2019 |
-| Porcine host EP | Gaur et al., *PLoS Comput Biol* 2021 |
-| Validated porcine MI geometries | Rosales et al., *PLOS Comput Biol* 2026 |
-| Human translational check | Ten Tusscher & Panfilov, 2006 + Gaur translation method |
-| Solver | openCARP (Plank et al., 2021) |
-| Patch–host interaction framework | Fassina et al., *PLoS Comput Biol* 2022 / *Comput Biol Med* 2023 |
-| Independent mechanism check | Gibbs et al., *J Physiol* 2023 |
-
-## Execution timeline (≈18 weeks)
-
-| Weeks | Focus | Critical path? |
-|-------|-------|----------------|
-| 1–2 | Acquire & adapt models + extract benchmark data | Yes |
-| 3–6 | Implement Layer 2 + mesh-convergence / monodomain–bidomain validation | Yes |
-| 7–9 | Layer 2.5 benchmark reproduction → go/no-go gate | Yes |
-| 10–13 | Architecture × phenotype sweep (porcine host) | — |
-| 14–15 | Human-substrate translational check | — |
-| 16–17 | Uncertainty quantification + structured threshold elicitation | — |
-| 18 | Package for experimental hand-off | — |
-
-Nothing in the design-space sweep is treated as decision-grade until the Layer 2.5 gate is passed.
-
-## Boundaries (locked)
-
-- This work generates **predictions and prioritization only**, not efficacy or safety claims.
-- All parameters remain literature- or public-data-derived until experimental calibration data exist.
-- No gene-editing sequences, culture recipes, or release criteria are specified.
-- Risk scores produced before the Layer 2.5 gate are provisional/exploratory and must not drive architecture down-selection or experimental resource allocation.
-- The entire stack relies only on public, published data and open-source methodology. No proprietary third-party code or unpublished data is required to start.
-
-## Repository structure
-
-```text
-Virelion-VB-204/
-├── README.md
-├── LICENSE
-├── configs/                 # Architecture, phenotype, host, solver, threshold definitions
-├── data/
-│   ├── benchmarks/          # Quantitative extracts from the five named studies
-│   ├── phenotypes/          # Kernik / CiPA distributions & provenance
-│   ├── geometries/          # Host geometry manifests (Rosales et al.)
-│   └── manifests/           # Dataset & parameter registries
-├── docs/
-│   ├── proposal/            # Full WS-C1 proposal & addenda
-│   ├── layers/              # Layer-by-layer technical specifications
-│   └── boundaries.md        # Locked scientific & regulatory guardrails
-├── scripts/                 # Environment setup, benchmark runs, sweeps
-├── src/vb204/               # Python package (phenotype → geometry → simulation → risk)
-├── notebooks/               # Exploratory analysis & visualization
-├── results/                 # Generated outputs (mostly gitignored)
-└── workflows/               # Optional orchestration (Snakemake etc.)
-```
-
-## Relationship to Virelion platforms
-
-VB-204 is one of Virelion Biotech’s therapeutic discovery programs. The risk-aggregation layer (Layer 3) is designed to be compatible with the VB-310 HeartTwin digital-heart-twin stack so that computational predictions can later be updated as real experimental data arrive.
-
-## Getting started
-
-1. Read `docs/boundaries.md` and the Layer 2.5 gate definition before treating any ranking as actionable.
-2. Install the environment (see `scripts/setup_environment.sh` once populated).
-3. Begin with Weeks 1–2: acquisition of the named public models and extraction of quantitative data from the five benchmark studies.
-
-## License
-
-GNU General Public License v3.0 or later (GPL-3.0-or-later). See `LICENSE`.
-
----
-
-*Discovery-stage concept. No experimental data are claimed. Statements about VB-204 itself are proposals and hypotheses unless explicitly marked otherwise.*
+License: GPL-3.0-or-later.

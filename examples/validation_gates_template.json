@@ -1,0 +1,13 @@
+{
+  "gates": {
+    "phenotype_data_provenance": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "geometry_mesh_validation": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "mesh_time_convergence": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "monodomain_bidomain_check": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "five_case_benchmark": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "mechanics_validation": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "cross_species_check": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "uncertainty_and_ood_review": {"status": "pending", "evidence_uri": "", "reviewer": ""},
+    "expert_threshold_review": {"status": "pending", "evidence_uri": "", "reviewer": ""}
+  }
+}

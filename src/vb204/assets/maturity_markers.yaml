@@ -1,0 +1,33 @@
+# Marker directions are hypotheses based on cited literature, not a validated release score.
+axes:
+  sarcomere_isoform_switch:
+    description: Human fetal-to-adult sarcomere isoform transition
+    up: [TNNI3, MYH7, MYL2]
+    down: [TNNI1, MYH6]
+    sources:
+      - "Guo and Pu, Circ Res 2020, https://doi.org/10.1161/CIRCRESAHA.119.315862"
+      - "Maturation study reporting MYH7, MYL2 and TNNI3 up; MYH6, MYL7 and TNNI1 down, PMC13247417"
+  electrophysiological_maturity:
+    description: Ion-channel and gap-junction maturation
+    up: [SCN5A, KCNJ2, GJA1, CACNA1C]
+    down: []
+    sources: ["PMC11352932", "PMC10469435", "PMC10022870", "Frontiers in Bioengineering 2023, 10.3389/fbioe.2023.1155052"]
+  calcium_handling:
+    description: Sarcoplasmic-reticulum calcium cycling
+    up: [RYR2, ATP2A2, PLN, CASQ2]
+    down: []
+    sources: ["PMC13247417", "Frontiers in Bioengineering 2023, 10.3389/fbioe.2023.1155052"]
+  metabolic_maturity:
+    description: Shift away from a glycolytic immature state
+    up: [PPARGC1A, CPT1B]
+    down: [LDHA]
+    sources: ["PMC6208155", "PMC13451179", "PMC7202542"]
+    note: PKM deliberately excluded because PKM1/PKM2 is an isoform switch not resolvable by gene-level counts.
+  structural_maturity:
+    description: T-tubule and membrane-trafficking maturation
+    up: [BIN1]
+    down: []
+    sources: ["De La Mata et al., Stem Cells 2019, https://doi.org/10.1002/stem.2927"]
+safety_flags:
+  residual_pluripotency: [POU5F1, NANOG, LIN28A]
+  proliferation: [MKI67]
