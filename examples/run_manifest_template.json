@@ -1,5 +1,6 @@
 {
   "solver": "openCARP",
+  "solver_version": "replace-with-installed-build",
   "executable": "",
   "parameter_file": "/ABSOLUTE/PATH/TO/CASE.par",
   "input_meshes": ["/ABSOLUTE/PATH/TO/validated_host_mesh.vtu"],
@@ -9,6 +10,14 @@
     "model_id": "replace-with-specific-case-id",
     "source_url": "https://doi.org/10.5281/zenodo.17415592",
     "license_status": "not_verified"
+  },
+  "parameter_provenance": {
+    "replace-with-actual-parameter-name": {
+      "source_url": "https://replace-with-cited-source",
+      "species": "porcine",
+      "units": "replace-with-units",
+      "uncertainty": "replace-with-reported-range-or-uncertainty"
+    }
   },
   "environment": {}
 }

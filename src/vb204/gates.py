@@ -1,5 +1,6 @@
 """Fail-closed acceptance gates separating runnable code from decision-grade science."""
 from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Any
@@ -19,15 +20,16 @@ REQUIRED_GATES = {
 def evaluate_gates(payload: dict[str, Any]) -> dict[str, Any]:
     supplied = payload.get("gates", {})
     reports = []
-    for gate_id, required_evidence in REQUIRED_GATES.items():
+    for gate_id, requirement in REQUIRED_GATES.items():
         row = supplied.get(gate_id, {})
         status = row.get("status", "pending")
         evidence = str(row.get("evidence_uri", "")).strip()
         reviewer = str(row.get("reviewer", "")).strip()
+        evidence_valid = evidence.startswith(("https://", "file://", "doi:"))
         valid_status = status in {"pending", "passed", "failed"}
-        complete = valid_status and status == "passed" and bool(evidence) and bool(reviewer)
+        complete = valid_status and status == "passed" and evidence_valid and bool(reviewer)
         reports.append({
-            "id": gate_id, "requirement": required_evidence, "status": status if valid_status else "invalid",
+            "id": gate_id, "requirement": requirement, "status": status if valid_status else "invalid",
             "evidence_uri": evidence or None, "reviewer": reviewer or None, "complete": complete
         })
     eligible = all(row["complete"] for row in reports)

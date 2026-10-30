@@ -1,5 +1,6 @@
 """Layer 2 orchestration helpers for real, externally sourced model assets."""
 from __future__ import annotations
+
 import hashlib
 import json
 import os
@@ -17,7 +18,7 @@ def sha256_file(path: str | Path) -> str:
     return digest.hexdigest()
 
 def validate_run_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
-    required = {"solver", "parameter_file", "input_meshes", "architecture", "species", "asset_provenance"}
+    required = {"solver", "parameter_file", "input_meshes", "architecture", "species", "asset_provenance", "parameter_provenance"}
     missing = required - set(manifest)
     if missing:
         raise ValueError("Run manifest missing: " + ", ".join(sorted(missing)))
@@ -42,6 +43,17 @@ def validate_run_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"asset_provenance.{key} is required")
     if provenance["license_status"] != "verified":
         raise ValueError("Asset license/redistribution status must be explicitly verified before a solver run")
+    parameter_provenance = manifest["parameter_provenance"]
+    if not isinstance(parameter_provenance, dict) or not parameter_provenance:
+        raise ValueError("parameter_provenance must list the source record for each parameter")
+    for key, record in parameter_provenance.items():
+        if not (
+            str(record.get("source_url", "")).startswith("https://")
+            and str(record.get("species", "")).strip()
+            and str(record.get("units", "")).strip()
+            and record.get("uncertainty") is not None
+        ):
+            raise ValueError(f"Parameter {key!r} needs source_url, species, units and uncertainty provenance")
     return {
         **manifest,
         "parameter_file": str(param_file),
@@ -112,7 +124,7 @@ def prepare_sweep(hosts: list[dict[str, Any]], phenotype_ids: list[str], archite
     jobs = []
     for host, phenotype, arch in product(hosts, phenotype_ids, architectures):
         mesh = Path(host.get("mesh_path", "")).expanduser()
-        ready = mesh.is_file() and host.get("license_status") == "verified" and bool(host.get("source_url")) and bool(host.get("species"))
+        ready = mesh.is_file() and host.get("license_status") == "verified" and str(host.get("source_url", "")).startswith("https://") and bool(host.get("species"))
         jobs.append({
             "job_id": f"{host.get('id','host')}-{phenotype}-{arch}",
             "host_id": host.get("id"), "species": host.get("species"),

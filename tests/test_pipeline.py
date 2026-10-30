@@ -1,8 +1,8 @@
-import json
 import pandas as pd
 import pytest
+
 from vb204.convergence import evaluate_convergence
-from vb204.gates import evaluate_gates, REQUIRED_GATES
+from vb204.gates import REQUIRED_GATES, evaluate_gates
 from vb204.geometry import validate_geometry_spec
 from vb204.phenotype import score_maturity
 from vb204.plan import architecture_scores, evaluate_go_no_go, report_data
@@ -17,6 +17,14 @@ def test_geometry_requires_actual_sourced_parameters():
     with pytest.raises(ValueError, match="incomplete"):
         validate_geometry_spec("C", {"thickness_mm": 1.0})
 
+def test_geometry_requires_provenance_for_every_numeric_parameter():
+    params = {
+        "thickness_mm": 1.0, "alignment": "anisotropic", "cell_density_per_mm3": 1e5,
+        "matrix_stiffness_kpa": 2.0, "vascular_void_fraction": .1, "interface_contact_area_mm2": 10.0,
+    }
+    with pytest.raises(ValueError, match="provenance"):
+        validate_geometry_spec("C", params, {})
+
 def test_convergence_requires_multiple_resolutions_and_steps():
     frame = pd.DataFrame([
       {"case_id":"x","spatial_level":1,"dt_ms":1.0,"metric":"activation_ms","value":10.0,"unit":"ms"},
@@ -28,7 +36,6 @@ def test_convergence_requires_multiple_resolutions_and_steps():
 
 def test_convergence_passes_synthetic_numerical_fixture_only():
     rows=[]
-    # Synthetic software fixture, not biomedical evidence.
     vals={(1,1.0):10.2,(1,.5):10.1,(2,1.0):10.1,(2,.5):10.02,(3,1.0):10.03,(3,.5):10.0}
     for (level,dt),value in vals.items():
         rows.append({"case_id":"synthetic-test","spatial_level":level,"dt_ms":dt,"metric":"activation_ms","value":value,"unit":"ms"})

@@ -1,29 +1,29 @@
 """Command line for VB-204 planning, data gates and solver orchestration."""
 from __future__ import annotations
+
 import argparse
 import json
 import sys
 from pathlib import Path
+
 import pandas as pd
-from .acquisition import record_inventory, download_record_file
+
+from .acquisition import download_record_file, record_inventory
 from .benchmark import evaluate_benchmark
 from .convergence import evaluate_file
 from .gates import evaluate_gate_file
 from .geometry import validate_geometry_spec
-from .plan import architecture_scores, evaluate_go_no_go, load_program, render_report, report_data, risk_scores
 from .phenotype import load_expression, score_maturity
+from .plan import architecture_scores, evaluate_go_no_go, render_report, report_data, risk_scores
 from .scoring import DEFAULT_WEIGHTS, ScoreSettings, score_architectures
 from .simulation import prepare_sweep, run_simulation
 
 def _write(data, path: str | None, markdown: bool = False) -> None:
-    if markdown:
-        text = data if isinstance(data, str) else json.dumps(data, indent=2, default=str)
-    else:
-        text = json.dumps(data, indent=2, default=str)
+    text = data if markdown and isinstance(data, str) else json.dumps(data, indent=2, default=str)
     if path:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(text + ("" if text.endswith("\\n") else "\\n"), encoding="utf-8")
+        target.write_text(text + "\n", encoding="utf-8")
         print(f"Wrote {target}")
     else:
         print(text)
@@ -130,8 +130,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "gonogo":
             _write(evaluate_go_no_go(_parse_overrides(args.overrides)), args.out)
         elif args.command == "maturity":
-            result = score_maturity(load_expression(args.expression_csv))
-            _write(result, args.out)
+            _write(score_maturity(load_expression(args.expression_csv)), args.out)
         elif args.command == "benchmark":
             result = evaluate_benchmark(pd.read_csv(args.input_csv))
             _write(result, args.out)
@@ -142,14 +141,13 @@ def main(argv: list[str] | None = None) -> int:
             if args.gate_report:
                 gate_payload = json.loads(Path(args.gate_report).read_text(encoding="utf-8"))
                 eligible = gate_payload.get("decision_grade_eligible") is True
-            frame = pd.read_csv(args.input_csv)
             result = score_architectures(
-                frame,
+                pd.read_csv(args.input_csv),
                 settings=ScoreSettings(weights=DEFAULT_WEIGHTS.copy(), draws=args.draws, seed=args.seed),
                 decision_grade_eligible=eligible,
             )
             if args.out:
-                path = Path(args.out); path.parent.mkdir(parents=True, exist_ok=True); result.to_csv(path, index=False); print(f"Wrote {path}")
+                target = Path(args.out); target.parent.mkdir(parents=True, exist_ok=True); result.to_csv(target, index=False); print(f"Wrote {target}")
             else:
                 print(result.to_string(index=False))
             if not eligible:
@@ -166,8 +164,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
         elif args.command == "geometry":
             payload = json.loads(Path(args.input_json).read_text(encoding="utf-8"))
-            result = validate_geometry_spec(payload["architecture"], payload["parameters"])
-            result["parameter_provenance"] = payload.get("parameter_provenance", {})
+            result = validate_geometry_spec(payload["architecture"], payload["parameters"], payload.get("parameter_provenance", {}))
             _write(result, args.out)
         elif args.command == "sweep":
             hosts = json.loads(Path(args.hosts).read_text(encoding="utf-8"))
@@ -186,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.download_file:
                 output["download"] = download_record_file(records[0], args.download_file, args.download_dir, accept_license=args.accept_license)
             _write(output, args.out)
-    except (ValueError, OSError, KeyError, TypeError) as exc:
+    except (ValueError, OSError, KeyError, TypeError, PermissionError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
     return 0

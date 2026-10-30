@@ -1,11 +1,11 @@
 """Explicit, traceable retrieval of public Zenodo model assets."""
 from __future__ import annotations
+
 import hashlib
 import json
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-DEFAULT_RECORDS = ("17415592", "17435811")
 API = "https://zenodo.org/api/records/"
 
 def fetch_record_metadata(record_id: str) -> dict:
@@ -18,8 +18,7 @@ def fetch_record_metadata(record_id: str) -> dict:
 def record_inventory(record_id: str) -> dict:
     record = fetch_record_metadata(record_id)
     return {
-        "record_id": str(record.get("id", record_id)),
-        "doi": record.get("doi"),
+        "record_id": str(record.get("id", record_id)), "doi": record.get("doi"),
         "title": record.get("metadata", {}).get("title"),
         "publication_date": record.get("metadata", {}).get("publication_date"),
         "license": record.get("metadata", {}).get("license"),
@@ -27,13 +26,14 @@ def record_inventory(record_id: str) -> dict:
             "key": f.get("key"), "size": f.get("size"), "checksum": f.get("checksum"),
             "download_url": f.get("links", {}).get("self")
         } for f in record.get("files", [])],
-        "metadata_url": API + record_id,
-        "downloaded": False
+        "metadata_url": API + record_id, "downloaded": False
     }
 
 def download_record_file(record_id: str, filename: str, output_dir: str | Path, accept_license: bool = False) -> dict:
     if not accept_license:
         raise PermissionError("Review source license and invoke with accept_license=True to explicitly acknowledge the download.")
+    if not filename or Path(filename).name != filename or filename in {".", ".."}:
+        raise ValueError("filename must be an exact record filename, not a path")
     inventory = record_inventory(record_id)
     match = next((f for f in inventory["files"] if f["key"] == filename), None)
     if not match:
