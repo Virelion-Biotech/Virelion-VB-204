@@ -13,7 +13,7 @@ The work uses only public data, published large-animal/NHP graft studies, and op
 <!-- VALIDATION_PRODUCT_STATUS:BEGIN -->
 ## Validation and product completion status
 
-**Reviewed 2026-10-14; implementation base `634233d549ab`.** **Status: Research scaffold; executable graft-ranking engine absent.** This is an evidence-backed scope assessment, not a percentage-complete estimate or a declaration that the product is finished.
+**Updated 2026-10-30.** **Status: Executable exploratory scoring and benchmark-input gate added; electrophysiology/electromechanics solver and independent benchmark reproduction remain absent.** This is an evidence-backed scope assessment, not a percentage-complete estimate or a declaration that the product is finished.
 
 | Area | Current evidence / remaining gate |
 |---|---|
@@ -42,7 +42,7 @@ The result is architecture down-selection that is evidence-based rather than ass
 
 ## Current implementation status
 
-This is a research scaffold, not an executable graft-ranking engine. The current Python package contains a version stub; the phenotype library, geometry generator, electromechanical solver integration, benchmark gate, and ranking workflow described below are not implemented here. The architecture and benchmark configuration files do not constitute completed simulations or validation results. No architecture ranking should be inferred from this repository's current contents.
+This is a research scaffold, not an executable graft-ranking engine. The Python package now includes strict candidate-input validation, seeded Monte Carlo propagation of supplied mean/SD estimates, a transparent relative score, rank-uncertainty summaries, a fail-closed five-study benchmark data gate, a CLI, regression tests, and GitHub Actions checks. It does not yet include phenotype distributions derived from source data, geometry generation, a cardiac solver adapter, electromechanical coupling, or independent numerical reproduction of the five studies. No architecture ranking should be inferred from placeholder inputs or treated as decision-grade.
 
 ## Computational pipeline (Layers 0–4 + gate)
 
@@ -142,9 +142,10 @@ VB-204 is one of Virelion Biotech’s therapeutic discovery programs. The risk-a
 
 ## Getting started
 
-1. Read `docs/boundaries.md` and the Layer 2.5 gate definition before treating any ranking as actionable.
-2. Install the environment (see `scripts/setup_environment.sh` once populated).
-3. Begin with Weeks 1–2: acquisition of the named public models and extraction of quantitative data from the five benchmark studies.
+1. Read `docs/boundaries.md` and [`docs/EXECUTION.md`](docs/EXECUTION.md).
+2. Install the package with `python -m pip install -e '.[dev]'` and run `pytest -q`.
+3. Extract documented source-study endpoints into `examples/benchmark_template.csv`; do not guess missing values.
+4. Populate `examples/candidates_template.csv` with sourced estimates, then run `vb204 benchmark` and `vb204 score` as described in the execution guide. The gate only checks input completeness and a qualitative order condition; it does not validate the cardiac solver.
 
 ## License
 
