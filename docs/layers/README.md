@@ -4,12 +4,12 @@ This directory holds the detailed technical specifications for each layer of the
 
 | Layer | Purpose | Status |
 |-------|---------|--------|
-| [Layer 0](layer0_phenotype.md) | Phenotype library (distributions) | Skeleton |
-| [Layer 1](layer1_geometry.md) | Tissue / graft geometry generator | Skeleton |
-| [Layer 2](layer2_simulation.md) | Multiphysics electromechanical simulation | Skeleton |
+| Layer 0 | Phenotype library (distributions) | Not yet written |
+| Layer 1 | Tissue / graft geometry generator | Not yet written |
+| Layer 2 | Multiphysics electromechanical simulation | Not yet written |
 | [Layer 2.5](layer25_benchmark_gate.md) | Benchmark validation gate | Skeleton |
-| [Layer 3](layer3_risk.md) | Risk aggregation & decision | Skeleton |
-| [Layer 4](layer4_experimental_prioritization.md) | Experimental prioritization | Skeleton |
+| Layer 3 | Risk aggregation & decision | Not yet written |
+| Layer 4 | Experimental prioritization | Not yet written |
 
 See also:
 
