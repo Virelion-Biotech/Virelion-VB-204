@@ -42,7 +42,11 @@ def test_download_rejects_checksum_mismatch_and_leaves_no_partial_file(tmp_path,
         def __enter__(self): return self
         def __exit__(self, *args): return False
         def read(self, size=-1):
-            chunk = self.data[self.offset:self.offset + size]; self.offset += len(chunk); return chunk
+            if size < 0:
+                size = len(self.data) - self.offset
+            chunk = self.data[self.offset:self.offset + size]
+            self.offset += len(chunk)
+            return chunk
     calls = {"n": 0}
     def fake_urlopen(request, timeout=0):
         calls["n"] += 1
