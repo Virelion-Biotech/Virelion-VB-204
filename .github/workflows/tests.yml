@@ -5,15 +5,45 @@ on:
     branches: ["**"]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: "3.11"
-      - run: python -m pip install --upgrade pip
-      - run: python -m pip install -e ".[dev]"
-      - run: pytest -q
-      - run: ruff check --select F src tests
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package and QA tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" pytest-cov build
+      - name: Run tests with coverage
+        run: pytest -q --cov=vb204 --cov-report=term-missing --cov-report=xml
+      - name: Lint
+        run: ruff check --select F src tests
+      - name: Build wheel
+        run: python -m build --wheel
+      - name: Test installed wheel outside the checkout
+        shell: bash
+        run: |
+          python -m venv /tmp/vb204-wheel
+          /tmp/vb204-wheel/bin/python -m pip install dist/*.whl
+          cd /tmp
+          /tmp/vb204-wheel/bin/vb204 --help
+          /tmp/vb204-wheel/bin/python -c "import vb204; print(vb204.__file__)"
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: coverage-python-${{ matrix.python-version }}
+          path: coverage.xml
+          if-no-files-found: ignore
+          retention-days: 14
