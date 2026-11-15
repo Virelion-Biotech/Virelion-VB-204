@@ -18,8 +18,8 @@ The Monte Carlo rank calculation used a double argsort, which assigns different 
 1. Benchmark validity is not empirical replication. The current Layer 2.5 gate checks that five records match the protocol's expected labels and that predictions order those labels. It does not calculate study-specific endpoint effect sizes, uncertainty, or independent reproduction. A pass must remain an ordinal protocol-concordance check only.
 2. Scoring is relative to the candidate set. Min-max scaling means scores change when candidates are added/removed; SDs are treated as independent normal perturbations and clipped to [0,1]. No empirical calibration, covariance model, external validation, or clinically meaningful risk probability exists.
 3. Gate attestations are not cryptographically authenticated. A JSON report can be manually authored. Reviewer fields and URLs are metadata, not proof of independence or correctness. Decision-grade eligibility therefore stays hard-coded false.
-4. Solver execution is a process wrapper, not a validated solver adapter. The runner records process status and hashes, but does not validate physics, mesh labels, fiber orientation, boundary conditions, output schema, convergence or scientific plausibility. Arbitrary command arrays must be treated as trusted local configuration.
-5. Timeout/output handling needs further hardening. Current subprocess output capture is in-memory; a solver producing enormous logs can exhaust memory. Timeout logs and child-process cleanup need dedicated integration tests.
+4. Solver execution remains an orchestration wrapper, not a validated solver adapter. It does not validate physics, mesh labels, fiber orientation, boundary conditions, output schema, convergence or scientific plausibility. Arbitrary command arrays must be treated as trusted local configuration.
+5. Solver stdout/stderr now stream directly to files, timeout handling terminates the solver process group with a bounded grace period, log hashes/byte counts are recorded, and the resolved run manifest is atomically finalized. This prevents unbounded in-memory log capture; disk-usage quotas and external-solver integration remain unvalidated.
 6. Phenotype scoring is descriptive only. Per-gene z-scores are calculated across samples in the supplied matrix, so values are cohort-relative and sensitive to sample composition. The marker panel and directionality require external biological review.
 7. Geometry schema is not geometry generation. Parametric checks do not establish that an anatomical mesh exists, is valid, or is solver-compatible.
 8. Roadmap status is calendar-derived. A passed date window is not evidence that a deliverable was completed; output must not be interpreted as progress tracking.
@@ -28,12 +28,12 @@ The Monte Carlo rank calculation used a double argsort, which assigns different 
 
 ## Next audit tranche
 
-- Replace in-memory subprocess capture with streamed log files, terminate process groups on timeout, and atomically finalize run manifests.
+- Add disk-usage limits/rotation for solver logs and validate child-process cleanup on supported operating systems.
 - Add property-based and mutation tests for schema validation, benchmark gates, convergence grids, and malformed metadata.
 - Separate protocol label concordance from evidence-backed empirical benchmark acceptance in names, output schema, and CLI exit semantics.
 - Add source dataset manifests with version, accession, licence, subject/sample units, processing code hash, and raw-to-derived lineage.
 - Add a machine-readable run-output contract and validate solver outputs before downstream scoring.
-- Add pinned CI dependencies, coverage reporting, security scanning and package build/install smoke tests.
+- Add a complete, reproducible environment lock and automated dependency vulnerability audit; CI now pins workflow actions, tests Python 3.10–3.12, publishes coverage, and builds/installs a wheel outside the checkout.
 - Independently review the marker panel, five study endpoint extractions, model assumptions, and architecture weights.
 
 ## Decision
