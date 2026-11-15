@@ -6,9 +6,12 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
+import tempfile
 import time
 from typing import Any
+
 
 def sha256_file(path: str | Path) -> str:
     digest = hashlib.sha256()
@@ -16,6 +19,27 @@ def sha256_file(path: str | Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True, allow_nan=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+    except BaseException:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        temporary_path.unlink(missing_ok=True)
+        raise
+
 
 def validate_run_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     required = {"solver", "parameter_file", "input_meshes", "architecture", "species", "asset_provenance", "parameter_provenance"}
@@ -63,6 +87,7 @@ def validate_run_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         "decision_grade_eligible": False
     }
 
+
 def _command_for_run(manifest: dict[str, Any], output_dir: Path) -> list[str]:
     custom = manifest.get("command")
     if custom:
@@ -76,9 +101,34 @@ def _command_for_run(manifest: dict[str, Any], output_dir: Path) -> list[str]:
         return [str(binary), "+F", str(manifest["parameter_file"])]
     raise ValueError("ELECTRA needs a reviewed, version-specific command array in the run manifest; no CLI compatibility is assumed.")
 
+
+def _stop_process_tree(process: subprocess.Popen[Any]) -> str:
+    """Terminate the solver and its descendants without buffering their output."""
+    if os.name == "posix":
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=5)
+        return "SIGTERM"
+    except subprocess.TimeoutExpired:
+        if os.name == "posix":
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        else:
+            process.kill()
+        process.wait()
+        return "SIGKILL"
+
+
 def run_simulation(manifest_path: str | Path, output_dir: str | Path, timeout_seconds: int = 86400) -> dict[str, Any]:
-    if timeout_seconds < 1:
-        raise ValueError("timeout_seconds must be positive")
+    if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or timeout_seconds < 1:
+        raise ValueError("timeout_seconds must be a positive integer")
     source = Path(manifest_path).expanduser().resolve()
     manifest = json.loads(source.read_text(encoding="utf-8"))
     validated = validate_run_manifest(manifest)
@@ -87,32 +137,59 @@ def run_simulation(manifest_path: str | Path, output_dir: str | Path, timeout_se
     command = _command_for_run(validated, out)
     if shutil.which(command[0]) is None and not Path(command[0]).is_file():
         raise FileNotFoundError(f"Solver executable cannot be resolved: {command[0]}")
+    stdout_path, stderr_path = out / "stdout.log", out / "stderr.log"
     record: dict[str, Any] = {
         "schema_version": "vb204-solver-run-v1", "manifest_source": str(source),
         "manifest_sha256": sha256_file(source), "validated_manifest": validated,
         "command": command, "working_directory": str(out),
         "started_utc_epoch": time.time(), "status": "RUNNING",
+        "timeout_seconds": timeout_seconds,
+        "log_policy": "stdout and stderr stream directly to files; output is not buffered in memory",
         "note": "A successful process exit is not scientific validation."
     }
-    (out / "run_manifest_resolved.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
+    resolved_path = out / "run_manifest_resolved.json"
+    _write_json_atomic(resolved_path, record)
     env = os.environ.copy()
     env.update({str(k): str(v) for k, v in manifest.get("environment", {}).items()})
+    creationflags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
     try:
-        result = subprocess.run(command, cwd=out, capture_output=True, text=True, timeout=timeout_seconds, env=env, check=False)
-        (out / "stdout.log").write_text(result.stdout or "", encoding="utf-8")
-        (out / "stderr.log").write_text(result.stderr or "", encoding="utf-8")
+        with stdout_path.open("wb") as stdout_handle, stderr_path.open("wb") as stderr_handle:
+            process = subprocess.Popen(
+                command, cwd=out, stdout=stdout_handle, stderr=stderr_handle, env=env,
+                start_new_session=(os.name == "posix"), creationflags=creationflags,
+            )
+            try:
+                returncode = process.wait(timeout=timeout_seconds)
+                status = "PROCESS_SUCCEEDED" if returncode == 0 else "PROCESS_FAILED"
+                termination = None
+            except subprocess.TimeoutExpired:
+                termination = _stop_process_tree(process)
+                returncode = process.returncode
+                status = "TIMED_OUT"
+            for handle in (stdout_handle, stderr_handle):
+                handle.flush()
+                os.fsync(handle.fileno())
         record.update({
-            "status": "PROCESS_SUCCEEDED" if result.returncode == 0 else "PROCESS_FAILED",
-            "returncode": result.returncode, "finished_utc_epoch": time.time(),
-            "stdout_sha256": sha256_file(out / "stdout.log"), "stderr_sha256": sha256_file(out / "stderr.log"),
+            "status": status, "returncode": returncode, "termination_signal": termination,
+            "finished_utc_epoch": time.time(),
+            "stdout_sha256": sha256_file(stdout_path), "stderr_sha256": sha256_file(stderr_path),
+            "stdout_bytes": stdout_path.stat().st_size, "stderr_bytes": stderr_path.stat().st_size,
             "decision_grade_eligible": False
         })
-    except subprocess.TimeoutExpired as exc:
-        (out / "stdout.log").write_text(str(exc.stdout or ""), encoding="utf-8")
-        (out / "stderr.log").write_text(str(exc.stderr or ""), encoding="utf-8")
-        record.update({"status": "TIMED_OUT", "finished_utc_epoch": time.time(), "decision_grade_eligible": False})
-    (out / "run_manifest_resolved.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
+    except OSError as exc:
+        stdout_path.touch(exist_ok=True)
+        stderr_path.touch(exist_ok=True)
+        record.update({
+            "status": "LAUNCH_FAILED", "error": f"{type(exc).__name__}: {exc}",
+            "finished_utc_epoch": time.time(),
+            "stdout_sha256": sha256_file(stdout_path), "stderr_sha256": sha256_file(stderr_path),
+            "decision_grade_eligible": False
+        })
+        _write_json_atomic(resolved_path, record)
+        raise
+    _write_json_atomic(resolved_path, record)
     return record
+
 
 def prepare_sweep(hosts: list[dict[str, Any]], phenotype_ids: list[str], architectures: list[str] | None = None) -> dict[str, Any]:
     from itertools import product

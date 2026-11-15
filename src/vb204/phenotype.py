@@ -7,26 +7,40 @@ import pandas as pd
 import yaml
 from .plan import ASSET_DIR
 
+
 def load_expression(path: str | Path) -> pd.DataFrame:
     frame = pd.read_csv(path, index_col=0)
     if frame.empty or frame.shape[1] < 2:
         raise ValueError("Expression matrix must contain genes as rows and at least two samples as columns")
-    if frame.index.has_duplicates:
-        raise ValueError("Gene symbols must be unique; aggregate duplicate genes before scoring")
     frame.index = frame.index.astype(str).str.strip().str.upper()
     if (frame.index == "").any():
         raise ValueError("Gene symbols cannot be empty")
+    if frame.index.has_duplicates:
+        duplicates = sorted(frame.index[frame.index.duplicated()].unique().tolist())
+        raise ValueError("Gene symbols must be unique after normalization; duplicates: " + ", ".join(duplicates))
+    if frame.columns.astype(str).str.strip().eq("").any():
+        raise ValueError("Sample identifiers cannot be empty")
+    if frame.columns.astype(str).duplicated().any():
+        raise ValueError("Sample identifiers must be unique")
     frame = frame.apply(pd.to_numeric, errors="raise")
     if not np.isfinite(frame.to_numpy(dtype=float)).all():
         raise ValueError("Expression matrix contains missing or non-finite values")
     return frame
+
 
 def _zscore_rows(frame: pd.DataFrame) -> pd.DataFrame:
     means = frame.mean(axis=1)
     std = frame.std(axis=1, ddof=0).replace(0, np.nan)
     return frame.sub(means, axis=0).div(std, axis=0).fillna(0.0)
 
+
 def score_maturity(expression: pd.DataFrame) -> dict[str, Any]:
+    if expression.empty or expression.shape[1] < 2:
+        raise ValueError("Expression matrix must contain at least two samples")
+    if expression.index.has_duplicates:
+        raise ValueError("Expression matrix gene identifiers must be unique")
+    if not np.isfinite(expression.to_numpy(dtype=float)).all():
+        raise ValueError("Expression matrix contains missing or non-finite values")
     with (ASSET_DIR / "maturity_markers.yaml").open(encoding="utf-8") as handle:
         panel = yaml.safe_load(handle)
     z = _zscore_rows(expression)
@@ -45,33 +59,25 @@ def score_maturity(expression: pd.DataFrame) -> dict[str, Any]:
         if down:
             signed.append(-z.loc[down].mean(axis=0))
         scores = pd.concat(signed, axis=1).mean(axis=1)
-        axes[axis_id] = {
-            "description": spec["description"], "scores": {str(k): round(float(v), 4) for k, v in scores.items()},
-            "genes_used": genes, "status": "RELATIVE_SCORE_ONLY", "sources": spec.get("sources", [])
-        }
+        axes[axis_id] = {"description": spec["description"],
+            "scores": {str(k): round(float(v), 4) for k, v in scores.items()},
+            "genes_used": genes, "status": "RELATIVE_SCORE_ONLY", "sources": spec.get("sources", [])}
         used_genes.update(genes)
     if not used_genes:
         raise ValueError("None of the maturity-panel genes occur in the expression matrix")
     safety = {}
     for group, genes in panel.get("safety_flags", {}).items():
         present = [g for g in genes if g in expression.index]
-        safety[group] = {
-            "genes_present": present,
+        safety[group] = {"genes_present": present,
             "expression": {gene: {str(s): float(expression.loc[gene, s]) for s in expression.columns} for gene in present},
             "relative_z_scores": {gene: {str(s): round(float(v), 4) for s, v in z.loc[gene].items()} for gene in present},
-            "interpretation": "Flag for review only; no fixed threshold or release decision."
-        }
-    axis_series = []
-    for axis_id, details in axes.items():
-        if details["scores"]:
-            axis_series.append(pd.Series(details["scores"], name=axis_id))
+            "interpretation": "Flag for review only; no fixed threshold or release decision."}
+    axis_series = [pd.Series(details["scores"], dtype=float, name=axis_id)
+                   for axis_id, details in axes.items() if details["scores"]]
     composite = pd.concat(axis_series, axis=1).mean(axis=1).sort_values(ascending=False) if axis_series else pd.Series(dtype=float)
-    return {
-        "status": "RELATIVE_RESEARCH_SCORECARD_NOT_VALIDATED_FOR_RELEASE",
+    return {"status": "RELATIVE_RESEARCH_SCORECARD_NOT_VALIDATED_FOR_RELEASE",
         "normalization_assumption": "Input values should be pre-normalized; normalization is not performed here.",
-        "axes": axes,
-        "composite_relative_index": {str(k): round(float(v), 4) for k, v in composite.items()},
+        "axes": axes, "composite_relative_index": {str(k): round(float(v), 4) for k, v in composite.items()},
         "safety_flags": safety,
         "missing_panel_genes": sorted({g for sp in panel["axes"].values() for g in sp.get("up", []) + sp.get("down", [])} - set(expression.index)),
-        "interpretation": "Scores compare samples in this input matrix only. A synthetic example or relative z-score is not evidence of biological maturity."
-    }
+        "interpretation": "Scores compare samples in this input matrix only. A synthetic example or relative z-score is not evidence of biological maturity."}

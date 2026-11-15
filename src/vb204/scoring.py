@@ -1,8 +1,6 @@
 """Transparent, uncertainty-aware exploratory architecture scoring."""
 from __future__ import annotations
-
 from dataclasses import dataclass
-
 import numpy as np
 import pandas as pd
 
@@ -17,8 +15,10 @@ class ScoreSettings:
     seed: int = 204
 
     def __post_init__(self) -> None:
-        if self.draws < 100:
-            raise ValueError("draws must be >= 100")
+        if isinstance(self.draws, bool) or not isinstance(self.draws, int) or self.draws < 100:
+            raise ValueError("draws must be an integer >= 100")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise ValueError("seed must be an integer")
         if set(self.weights) != set(DEFAULT_WEIGHTS):
             raise ValueError(f"weights must contain exactly {sorted(DEFAULT_WEIGHTS)}")
         if any(not np.isfinite(v) or v < 0 for v in self.weights.values()):
@@ -34,10 +34,11 @@ def validate_candidates(frame: pd.DataFrame) -> pd.DataFrame:
     data = frame.copy()
     if data.empty:
         raise ValueError("candidate table is empty")
-    if data["architecture"].isna().any() or data["architecture"].astype(str).str.strip().eq("").any():
+    data["architecture"] = data["architecture"].astype("string").str.strip()
+    if data["architecture"].isna().any() or data["architecture"].eq("").any():
         raise ValueError("architecture identifiers must be non-empty")
     if data["architecture"].duplicated().any():
-        raise ValueError("architecture identifiers must be unique")
+        raise ValueError("architecture identifiers must be unique after whitespace normalization")
     numeric = sorted(REQUIRED_COLUMNS - {"architecture"})
     for col in numeric:
         data[col] = pd.to_numeric(data[col], errors="raise")
@@ -75,15 +76,12 @@ def score_architectures(candidates: pd.DataFrame, *, settings: ScoreSettings | N
     scores = (w["arrhythmia_risk"] * (1 - draws_by_metric["arrhythmia_risk"])
               + w["mechanical_contribution"] * draws_by_metric["mechanical_contribution"]
               + w["synchrony"] * draws_by_metric["synchrony"])
-    ranks = np.argsort(np.argsort(-scores, axis=1), axis=1) + 1
+    ranks = pd.DataFrame(-scores).rank(axis=1, method="average", ascending=True).to_numpy()
     result = pd.DataFrame({
-        "architecture": data["architecture"].astype(str),
-        "exploratory_score": point_score,
+        "architecture": data["architecture"].astype(str), "exploratory_score": point_score,
         "score_ci_2_5": np.quantile(scores, 0.025, axis=0),
         "score_ci_97_5": np.quantile(scores, 0.975, axis=0),
-        "probability_rank_1": (ranks == 1).mean(axis=0),
-        "median_rank": np.median(ranks, axis=0),
+        "probability_rank_1": (ranks == 1).mean(axis=0), "median_rank": np.median(ranks, axis=0),
         "validation_gates_complete": bool(validation_gates_complete),
-        "decision_status": "GATES_RECORDED_REQUIRES_INDEPENDENT_REVIEW" if validation_gates_complete else "EXPLORATORY_GATE_BLOCKED",
-    })
+        "decision_status": "GATES_RECORDED_REQUIRES_INDEPENDENT_REVIEW" if validation_gates_complete else "EXPLORATORY_GATE_BLOCKED"})
     return result.sort_values(["exploratory_score", "architecture"], ascending=[False, True]).reset_index(drop=True)
