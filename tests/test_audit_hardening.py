@@ -93,3 +93,72 @@ def test_tied_architectures_do_not_receive_arbitrary_rank_one_probability():
     result = score_architectures(frame, settings=ScoreSettings(weights={"arrhythmia_risk":.5,"mechanical_contribution":.25,"synchrony":.25},draws=100,seed=1))
     assert (result["probability_rank_1"] == 0).all()
     assert (result["median_rank"] == 1.5).all()
+
+
+def _solver_manifest(tmp_path, command):
+    import sys
+
+    parameter_file = tmp_path / "parameters.json"
+    mesh_file = tmp_path / "mesh.dat"
+    parameter_file.write_text("{}", encoding="utf-8")
+    mesh_file.write_text("mesh-fixture", encoding="utf-8")
+    manifest = {
+        "solver": "openCARP",
+        "parameter_file": str(parameter_file),
+        "input_meshes": [str(mesh_file)],
+        "architecture": "A",
+        "species": "synthetic-test-only",
+        "asset_provenance": {
+            "source_url": "https://example.org/mesh",
+            "license_status": "verified",
+            "model_id": "synthetic-fixture",
+        },
+        "parameter_provenance": {
+            "conduction_velocity": {
+                "source_url": "https://example.org/parameter",
+                "species": "synthetic-test-only",
+                "units": "cm/ms",
+                "uncertainty": 0.01,
+            }
+        },
+        "command": [sys.executable, "-c", command],
+    }
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    return path
+
+
+def test_solver_streams_logs_and_atomically_finalizes_manifest(tmp_path):
+    from vb204.simulation import run_simulation
+
+    manifest = _solver_manifest(tmp_path, "import sys; print('stdout-marker'); print('stderr-marker', file=sys.stderr)")
+    output = tmp_path / "run-output"
+    result = run_simulation(manifest, output, timeout_seconds=10)
+    assert result["status"] == "PROCESS_SUCCEEDED"
+    assert "stdout-marker" in (output / "stdout.log").read_text(encoding="utf-8")
+    assert "stderr-marker" in (output / "stderr.log").read_text(encoding="utf-8")
+    assert result["stdout_bytes"] > 0 and result["stderr_bytes"] > 0
+    saved = json.loads((output / "run_manifest_resolved.json").read_text(encoding="utf-8"))
+    assert saved["status"] == "PROCESS_SUCCEEDED"
+    assert saved["stdout_sha256"] == result["stdout_sha256"]
+    assert not list(output.glob("*.tmp"))
+
+
+def test_solver_timeout_kills_process_and_preserves_partial_logs(tmp_path):
+    from vb204.simulation import run_simulation
+
+    manifest = _solver_manifest(tmp_path, "import time; print('before-timeout', flush=True); time.sleep(30)")
+    output = tmp_path / "timeout-output"
+    result = run_simulation(manifest, output, timeout_seconds=1)
+    assert result["status"] == "TIMED_OUT"
+    assert result["returncode"] is not None
+    assert "before-timeout" in (output / "stdout.log").read_text(encoding="utf-8")
+    saved = json.loads((output / "run_manifest_resolved.json").read_text(encoding="utf-8"))
+    assert saved["status"] == "TIMED_OUT"
+
+
+def test_solver_rejects_boolean_timeout(tmp_path):
+    from vb204.simulation import run_simulation
+
+    with pytest.raises(ValueError, match="positive integer"):
+        run_simulation(tmp_path / "unused.json", tmp_path / "out", timeout_seconds=True)
